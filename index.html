@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f0f14" />
+  <meta name="description" content="تایپ صوتی فارسی – سریع، دقیق، آفلاین" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="صوتی‌تایپ" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>صوتی‌تایپ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── TOKENS ── */
+    :root {
+      --bg:        #0f0f14;
+      --surface:   #17171f;
+      --surface2:  #1f1f2a;
+      --border:    #2a2a38;
+      --accent:    #a78bfa;       /* violet */
+      --accent2:   #7c3aed;
+      --live:      #34d399;       /* green pulse when recording */
+      --text:      #e8e6f0;
+      --muted:     #6b6880;
+      --danger:    #f87171;
+      --font:      'Vazirmatn', system-ui, sans-serif;
+      --r:         14px;
+      --r-sm:      8px;
+      --shadow:    0 8px 32px rgba(0,0,0,.45);
+    }
+
+    /* ── RESET ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10;
+    }
+    .logo {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -.5px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: inline-block;
+    }
+    .header-actions { display: flex; gap: 10px; }
+    .icon-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: var(--r-sm);
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: color .2s, background .2s;
+    }
+    .icon-btn:hover { color: var(--text); background: var(--surface); }
+
+    /* ── MAIN ── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 16px;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ── MIC ZONE ── */
+    .mic-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 32px 20px 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+    }
+
+    .mic-btn {
+      position: relative;
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      background: var(--surface2);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .15s, background .2s;
+      outline: none;
+    }
+    .mic-btn svg { width: 36px; height: 36px; pointer-events: none; }
+    .mic-btn:hover { transform: scale(1.05); background: var(--border); }
+    .mic-btn:active { transform: scale(.96); }
+
+    .mic-btn.recording {
+      background: #1a1034;
+    }
+    .mic-btn.recording .mic-icon { color: var(--live); }
+
+    /* pulse rings */
+    .mic-btn.recording::before,
+    .mic-btn.recording::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid var(--live);
+      opacity: .6;
+      animation: pulse 1.4s ease-out infinite;
+    }
+    .mic-btn.recording::after { animation-delay: .7s; }
+
+    @keyframes pulse {
+      0%   { transform: scale(1);    opacity: .6; }
+      100% { transform: scale(1.55); opacity: 0;  }
+    }
+
+    .mic-icon { color: var(--muted); transition: color .2s; }
+    .mic-label {
+      font-size: .85rem;
+      color: var(--muted);
+      letter-spacing: .3px;
+      min-height: 1.4em;
+      transition: color .2s;
+    }
+    .mic-label.live { color: var(--live); }
+
+    /* waveform bars */
+    .waveform {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 28px;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .waveform.active { opacity: 1; }
+    .waveform span {
+      display: block;
+      width: 3px;
+      border-radius: 3px;
+      background: var(--accent);
+      height: 6px;
+      animation: wave 1s ease-in-out infinite;
+    }
+    .waveform span:nth-child(1) { animation-delay: 0s; }
+    .waveform span:nth-child(2) { animation-delay: .1s; }
+    .waveform span:nth-child(3) { animation-delay: .2s; }
+    .waveform span:nth-child(4) { animation-delay: .1s; }
+    .waveform span:nth-child(5) { animation-delay: 0s; }
+
+    @keyframes wave {
+      0%,100% { height: 5px;  }
+      50%      { height: 22px; }
+    }
+
+    /* interim text floating under waveform */
+    .interim-text {
+      font-size: .88rem;
+      color: var(--muted);
+      min-height: 1.3em;
+      text-align: center;
+      font-style: italic;
+      direction: rtl;
+    }
+
+    /* ── TOOLBAR ── */
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .toolbar-left { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
+    .toolbar-right { display: flex; gap: 8px; }
+
+    .btn {
+      font-family: var(--font);
+      font-size: .82rem;
+      font-weight: 500;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      padding: 7px 14px;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background .2s, color .2s, border-color .2s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--border); }
+    .btn.danger { color: var(--danger); }
+    .btn.danger:hover { background: rgba(248,113,113,.1); border-color: var(--danger); }
+    .btn.primary {
+      background: var(--accent2);
+      border-color: var(--accent2);
+      color: #fff;
+    }
+    .btn.primary:hover { background: var(--accent); border-color: var(--accent); }
+
+    /* ── PUNCTUATION BAR ── */
+    .punct-bar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 8px 2px;
+    }
+    .punct-btn {
+      font-family: var(--font);
+      font-size: 1rem;
+      font-weight: 600;
+      min-width: 38px;
+      height: 38px;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--accent);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s, transform .1s, border-color .15s;
+      user-select: none;
+    }
+    .punct-btn:hover { background: var(--border); border-color: var(--accent); }
+    .punct-btn:active { transform: scale(.9); background: var(--accent2); color: #fff; }
+    .punct-btn .key-hint {
+      display: block;
+      font-size: .6rem;
+      color: var(--muted);
+      font-weight: 400;
+      margin-top: 1px;
+    }
+    .punct-btn-inner { display: flex; flex-direction: column; align-items: center; line-height: 1; }
+
+    /* ── TTS & TRANSLATE SECTION ── */
+    .tools-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .tools-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .tools-row .btn { flex: 1; justify-content: center; min-width: 110px; }
+    .tools-row .btn.playing {
+      background: var(--accent2);
+      border-color: var(--accent2);
+      color: #fff;
+    }
+    .translate-output {
+      display: none;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 10px 12px;
+      font-size: .95rem;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .translate-output.visible { display: block; }
+    .translate-output.rtl-text { direction: rtl; text-align: right; font-family: var(--font); }
+    .translate-output.ltr-text { direction: ltr; text-align: left; font-family: system-ui, sans-serif; }
+    .translate-actions {
+      display: none;
+      gap: 8px;
+    }
+    .translate-actions.visible { display: flex; }
+
+    /* ── EDITOR ── */
+    .editor-wrap {
+      position: relative;
+      flex: 1;
+    }
+    #editor {
+      width: 100%;
+      min-height: 240px;
+      max-height: 50dvh;
+      resize: vertical;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 1.05rem;
+      line-height: 1.85;
+      padding: 18px 20px;
+      direction: rtl;
+      text-align: right;
+      outline: none;
+      transition: border-color .2s;
+      overflow-y: auto;
+    }
+    #editor:focus { border-color: var(--accent2); }
+    #editor[data-placeholder]:empty::before {
+      content: attr(data-placeholder);
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    /* char counter */
+    .char-count {
+      position: absolute;
+      bottom: 10px;
+      left: 14px;
+      font-size: .72rem;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    /* ── HISTORY ── */
+    .section-label {
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    #history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .history-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 10px 14px;
+      font-size: .88rem;
+      line-height: 1.6;
+      direction: rtl;
+      text-align: right;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .history-item:hover { background: var(--surface2); }
+    .history-item .h-text { flex: 1; }
+    .history-item .h-time { font-size: .7rem; color: var(--muted); white-space: nowrap; }
+
+    /* ── STATUS BAR ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: .75rem;
+      color: var(--muted);
+      padding: 10px 0 6px;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+    .status-dot.green  { background: var(--live); }
+    .status-dot.violet { background: var(--accent); }
+    .status-dot.red    { background: var(--danger); }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: .85rem;
+      padding: 10px 20px;
+      border-radius: 50px;
+      box-shadow: var(--shadow);
+      transition: transform .3s cubic-bezier(.22,1,.36,1), opacity .3s;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ── INSTALL BANNER ── */
+    #install-banner {
+      display: none;
+      margin: 0 0 4px;
+      background: linear-gradient(135deg, #1a1034, #17171f);
+      border: 1px solid var(--accent2);
+      border-radius: var(--r);
+      padding: 14px 18px;
+      align-items: center;
+      gap: 12px;
+      font-size: .88rem;
+    }
+    #install-banner.visible { display: flex; }
+    #install-banner .ib-text { flex: 1; }
+    #install-banner .ib-title { font-weight: 600; margin-bottom: 2px; }
+    #install-banner .ib-sub { color: var(--muted); font-size: .78rem; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 520px) {
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .toolbar-left, .toolbar-right { justify-content: stretch; }
+      .btn { justify-content: center; }
+    }
+
+    /* ── REDUCED MOTION ── */
+    @media (prefers-reduced-motion: reduce) {
+      .mic-btn.recording::before,
+      .mic-btn.recording::after,
+      .waveform span { animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <span class="logo-dot"></span>
+    صوتی‌تایپ
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" id="clear-all-btn" title="پاک کردن همه">
+      <!-- trash -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main>
+
+  <!-- install banner -->
+  <div id="install-banner">
+    <div class="ib-text">
+      <div class="ib-title">نصب اپ</div>
+      <div class="ib-sub">برای دسترسی سریع‌تر روی صفحه اصلی نصب کن</div>
+    </div>
+    <button class="btn primary" id="install-btn">نصب</button>
+    <button class="icon-btn" id="dismiss-banner" style="flex-shrink:0">✕</button>
+  </div>
+
+  <!-- mic section -->
+  <div class="mic-zone">
+    <button class="mic-btn" id="mic-btn" aria-label="شروع ضبط">
+      <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="2" width="6" height="12" rx="3"/>
+        <path d="M5 10a7 7 0 0 0 14 0"/>
+        <line x1="12" y1="19" x2="12" y2="22"/>
+        <line x1="9" y1="22" x2="15" y2="22"/>
+      </svg>
+    </button>
+    <div class="waveform" id="waveform">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <p class="mic-label" id="mic-label">برای شروع ضبط کلیک کن</p>
+    <p class="interim-text" id="interim-text"></p>
+  </div>
+
+  <!-- punctuation quick-insert bar -->
+  <div class="punct-bar" id="punct-bar" aria-label="درج سریع علائم نگارشی">
+    <button class="punct-btn" data-char="،" title="ویرگول (میان‌بر: ،  یا  ,)">،</button>
+    <button class="punct-btn" data-char="؛" title="نقطه‌ویرگول (میان‌بر: ؛  یا  ;)">؛</button>
+    <button class="punct-btn" data-char="؟" title="علامت سؤال (میان‌بر: ؟  یا  ?)">؟</button>
+    <button class="punct-btn" data-char="!" title="علامت تعجب (میان‌بر: !)">!</button>
+    <button class="punct-btn" data-char="." title="نقطه (میان‌بر: .)">.</button>
+    <button class="punct-btn" data-char=":" title="دونقطه (میان‌بر: :)">:</button>
+    <button class="punct-btn" data-char="«»" data-cursor-offset="1" title="گیومه (میان‌بر: «)">«»</button>
+    <button class="punct-btn" data-char="()" data-cursor-offset="1" title="پرانتز (میان‌بر: ()">()</button>
+    <button class="punct-btn" data-char="…" title="سه‌نقطه (میان‌بر: ...)">…</button>
+    <button class="punct-btn" data-char="-" title="خط تیره (میان‌بر: -)">-</button>
+    <button class="punct-btn" id="new-line-btn" data-newline="true" title="پاراگراف جدید (میان‌بر: Enter)">
+      <span class="punct-btn-inner">¶<span class="key-hint">پاراگراف</span></span>
+    </button>
+  </div>
+
+  <!-- toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button class="btn" id="copy-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        کپی
+      </button>
+      <button class="btn" id="share-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        اشتراک
+      </button>
+      <button class="btn" id="save-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        ذخیره
+      </button>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn danger" id="clear-editor-btn">پاک‌کردن متن</button>
+    </div>
+  </div>
+
+  <!-- editor -->
+  <div class="editor-wrap">
+    <div
+      id="editor"
+      contenteditable="true"
+      spellcheck="false"
+      data-placeholder="متن اینجا ظاهر می‌شه…"
+      aria-label="محل نمایش متن تایپ‌شده"
+    ></div>
+    <span class="char-count" id="char-count">۰ کاراکتر</span>
+  </div>
+
+  <!-- TTS & Translate -->
+  <p class="section-label">خواندن و ترجمه متن</p>
+  <div class="tools-section">
+    <div class="tools-row">
+      <button class="btn" id="tts-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        خواندن متن
+      </button>
+      <button class="btn" id="translate-en-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        ترجمه به انگلیسی
+      </button>
+      <button class="btn" id="translate-fa-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        ترجمه به فارسی
+      </button>
+    </div>
+    <div class="translate-output" id="translate-output"></div>
+    <div class="translate-actions" id="translate-actions">
+      <button class="btn" id="translate-copy-btn">کپی ترجمه</button>
+      <button class="btn" id="translate-insert-btn">جایگزینی در متن</button>
+      <button class="btn" id="translate-tts-btn">خواندن ترجمه</button>
+    </div>
+  </div>
+
+  <!-- status bar -->
+  <div class="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">آماده</span>
+  </div>
+
+  <!-- history -->
+  <p class="section-label">متن‌های اخیر</p>
+  <div id="history-list">
+    <p style="font-size:.82rem;color:var(--muted);text-align:center;padding:8px 0">هنوز چیزی ذخیره نشده</p>
+  </div>
+
+</main>
+
+<!-- toast -->
+<div id="toast"></div>
+
+<!-- SERVICE WORKER + APP LOGIC -->
+<script>
+// ── SERVICE WORKER REGISTRATION ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ── ELEMENTS ──
+const micBtn        = document.getElementById('mic-btn');
+const micLabel      = document.getElementById('mic-label');
+const interimText   = document.getElementById('interim-text');
+const waveform      = document.getElementById('waveform');
+const editor        = document.getElementById('editor');
+const charCount     = document.getElementById('char-count');
+const statusDot     = document.getElementById('status-dot');
+const statusText    = document.getElementById('status-text');
+const copyBtn       = document.getElementById('copy-btn');
+const shareBtn      = document.getElementById('share-btn');
+const saveBtn       = document.getElementById('save-btn');
+const clearEditorBtn= document.getElementById('clear-editor-btn');
+const clearAllBtn   = document.getElementById('clear-all-btn');
+const historyList   = document.getElementById('history-list');
+const toast         = document.getElementById('toast');
+const installBanner = document.getElementById('install-banner');
+const installBtn    = document.getElementById('install-btn');
+const dismissBanner = document.getElementById('dismiss-banner');
+
+// ── STATE ──
+let recognition   = null;
+let isRecording   = false;
+let restartTimer  = null;
+let deferredPrompt = null;
+const HISTORY_KEY = 'svt_history';
+
+// ── SPEECH RECOGNITION ──
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function buildRecognition() {
+  // هر بار یه instance جدید می‌سازیم — Android Chrome با restart مشکل داره
+  const r = new SpeechRecognition();
+  r.lang             = 'fa-IR';
+  r.interimResults   = true;
+  r.continuous       = false;   // false = پایدارتر روی موبایل
+  r.maxAlternatives  = 1;
+
+  r.onstart = () => {
+    micBtn.classList.add('recording');
+    waveform.classList.add('active');
+    micLabel.textContent = 'در حال گوش دادن…';
+    micLabel.classList.add('live');
+    setStatus('در حال ضبط', 'green');
+  };
+
+  r.onresult = (e) => {
+    let interim = '';
+    let final   = '';
+    for (let i = 0; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t + ' ';
+      else interim += t;
+    }
+    if (final)   { insertText(final); interimText.textContent = ''; }
+    if (interim) { interimText.textContent = interim; }
+  };
+
+  r.onerror = (e) => {
+    if (e.error === 'not-allowed') {
+      showToast('دسترسی به میکروفون رد شد');
+      setStatus('دسترسی به میکروفون رد شد', 'red');
+      isRecording = false;
+      stopUI();
+    }
+    // no-speech / audio-capture / network → فقط صبر می‌کنیم onend بیاد
+  };
+
+  r.onend = () => {
+    interimText.textContent = '';
+    if (isRecording) {
+      // به جای restart، یه instance تازه می‌سازیم بعد از ۲۵۰ms
+      clearTimeout(restartTimer);
+      restartTimer = setTimeout(() => {
+        if (isRecording) {
+          recognition = buildRecognition();
+          recognition.start();
+        }
+      }, 250);
+    } else {
+      stopUI();
+    }
+  };
+
+  return r;
+}
+
+function insertText(text) {
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount && editor.contains(sel.anchorNode)) {
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    const node = document.createTextNode(text);
+    range.insertNode(node);
+    range.setStartAfter(node);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } else {
+    editor.textContent += text;
+  }
+  updateCharCount();
+}
+
+function stopUI() {
+  micBtn.classList.remove('recording');
+  waveform.classList.remove('active');
+  micLabel.textContent = 'برای شروع ضبط کلیک کن';
+  micLabel.classList.remove('live');
+  interimText.textContent = '';
+  setStatus('آماده', '');
+}
+
+// ── MIC BUTTON ──
+micBtn.addEventListener('click', () => {
+  if (!SpeechRecognition) {
+    showToast('مرورگر شما پشتیبانی نمی‌کند');
+    return;
+  }
+
+  if (isRecording) {
+    isRecording = false;
+    clearTimeout(restartTimer);
+    try { recognition.stop(); } catch(e) {}
+  } else {
+    isRecording = true;
+    recognition = buildRecognition();
+    try { recognition.start(); } catch(e) {
+      showToast('خطا در شروع میکروفون');
+      isRecording = false;
+    }
+  }
+});
+
+// ── PUNCTUATION QUICK-INSERT ──
+const punctBar = document.getElementById('punct-bar');
+
+function focusEditorEnd() {
+  editor.focus();
+  const sel = window.getSelection();
+  if (!sel.rangeCount || !editor.contains(sel.anchorNode)) {
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+}
+
+function insertParagraph() {
+  focusEditorEnd();
+  const sel = window.getSelection();
+  const range = sel.getRangeAt(0);
+  range.deleteContents();
+  const br = document.createElement('br');
+  range.insertNode(br);
+  range.setStartAfter(br);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+  updateCharCount();
+}
+
+// insert text at cursor, optionally moving cursor back `cursorOffset` chars (e.g. inside quotes/parens)
+function insertPunct(text, cursorOffset) {
+  focusEditorEnd();
+  insertText(text);
+  if (cursorOffset) {
+    const sel = window.getSelection();
+    if (sel.rangeCount) {
+      const range = sel.getRangeAt(0);
+      for (let i = 0; i < cursorOffset; i++) {
+        sel.modify('move', 'backward', 'character');
+      }
+    }
+  }
+}
+
+punctBar.addEventListener('click', (e) => {
+  const btn = e.target.closest('.punct-btn');
+  if (!btn) return;
+  if (btn.dataset.newline) {
+    insertParagraph();
+    return;
+  }
+  insertPunct(btn.dataset.char, parseInt(btn.dataset.cursorOffset || '0', 10));
+  btn.style.transform = 'scale(.9)';
+  setTimeout(() => { btn.style.transform = ''; }, 100);
+});
+
+// keyboard shortcuts inside the editor: quick punctuation while typing
+const PUNCT_KEY_MAP = {
+  ',': '،',
+  ';': '؛',
+  '?': '؟'
+};
+let lastThreeDotsBuffer = '';
+
+editor.addEventListener('keydown', (e) => {
+  // Latin punctuation keys auto-convert to Persian equivalents
+  if (PUNCT_KEY_MAP[e.key] && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    insertPunct(PUNCT_KEY_MAP[e.key], 0);
+    return;
+  }
+  // "..." (three dots) -> "…"
+  if (e.key === '.') {
+    lastThreeDotsBuffer += '.';
+    if (lastThreeDotsBuffer.length === 3) {
+      e.preventDefault();
+      // remove the two "." already inserted before this one
+      focusEditorEnd();
+      const sel = window.getSelection();
+      if (sel.rangeCount) {
+        for (let i = 0; i < 2; i++) sel.modify('extend', 'backward', 'character');
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        sel.collapseToEnd();
+      }
+      insertPunct('…', 0);
+      lastThreeDotsBuffer = '';
+      return;
+    }
+  } else {
+    lastThreeDotsBuffer = '';
+  }
+});
+
+// ── CHAR COUNT ──
+function updateCharCount() {
+  const len = editor.textContent.length;
+  charCount.textContent = toPersianNum(len) + ' کاراکتر';
+}
+editor.addEventListener('input', updateCharCount);
+
+function toPersianNum(n) {
+  return String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+}
+
+// ── STATUS ──
+function setStatus(msg, color) {
+  statusText.textContent = msg;
+  statusDot.className = 'status-dot' + (color ? ' ' + color : '');
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
+}
+
+// ── COPY ──
+copyBtn.addEventListener('click', async () => {
+  const text = editor.textContent;
+  if (!text.trim()) { showToast('متنی برای کپی وجود ندارد'); return; }
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('متن کپی شد ✓');
+  } catch {
+    showToast('کپی ناموفق بود');
+  }
+});
+
+// ── SHARE ──
+shareBtn.addEventListener('click', async () => {
+  const text = editor.textContent.trim();
+  if (!text) { showToast('متنی برای اشتراک‌گذاری وجود ندارد'); return; }
+  if (navigator.share) {
+    try { await navigator.share({ text }); }
+    catch {}
+  } else {
+    await navigator.clipboard.writeText(text);
+    showToast('متن در کلیپ‌بورد کپی شد');
+  }
+});
+
+// ── SAVE TO HISTORY ──
+saveBtn.addEventListener('click', () => {
+  const text = editor.textContent.trim();
+  if (!text) { showToast('متنی برای ذخیره وجود ندارد'); return; }
+  saveToHistory(text);
+  showToast('ذخیره شد ✓');
+});
+
+function saveToHistory(text) {
+  let history = loadHistory();
+  const item = { text, time: new Date().toISOString() };
+  history.unshift(item);
+  if (history.length > 30) history = history.slice(0, 30);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  renderHistory();
+}
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+  catch { return []; }
+}
+
+function renderHistory() {
+  const history = loadHistory();
+  if (!history.length) {
+    historyList.innerHTML = '<p style="font-size:.82rem;color:var(--muted);text-align:center;padding:8px 0">هنوز چیزی ذخیره نشده</p>';
+    return;
+  }
+  historyList.innerHTML = history.map((item, i) => `
+    <div class="history-item" data-index="${i}">
+      <span class="h-text">${escapeHtml(item.text.slice(0, 120))}${item.text.length > 120 ? '…' : ''}</span>
+      <span class="h-time">${formatTime(item.time)}</span>
+    </div>
+  `).join('');
+  historyList.querySelectorAll('.history-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.dataset.index);
+      const h = loadHistory();
+      if (h[idx]) {
+        editor.textContent = h[idx].text;
+        updateCharCount();
+        showToast('متن بارگذاری شد');
+      }
+    });
+  });
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('fa-IR', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+// ── CLEAR ──
+clearEditorBtn.addEventListener('click', () => {
+  editor.textContent = '';
+  updateCharCount();
+  showToast('متن پاک شد');
+});
+
+clearAllBtn.addEventListener('click', () => {
+  if (!confirm('همه متن‌های ذخیره‌شده پاک شوند؟')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+  showToast('همه متن‌ها پاک شدند');
+});
+
+// ── TEXT TO SPEECH ──
+const ttsBtn = document.getElementById('tts-btn');
+const ttsSynth = window.speechSynthesis;
+let ttsUtterance = null;
+
+function pickVoice(lang) {
+  const voices = ttsSynth.getVoices();
+  // try exact match first, then language-prefix match
+  return voices.find(v => v.lang === lang) ||
+         voices.find(v => v.lang && v.lang.startsWith(lang.split('-')[0])) ||
+         null;
+}
+
+function speakText(text, lang, onEnd) {
+  if (!('speechSynthesis' in window)) {
+    showToast('مرورگر شما از خواندن متن پشتیبانی نمی‌کند');
+    return;
+  }
+  if (!text || !text.trim()) {
+    showToast('متنی برای خواندن وجود ندارد');
+    return;
+  }
+  ttsSynth.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = lang;
+  const voice = pickVoice(lang);
+  if (voice) utter.voice = voice;
+  utter.rate = 1;
+  utter.onend = () => { if (onEnd) onEnd(); };
+  utter.onerror = () => { if (onEnd) onEnd(); };
+  ttsUtterance = utter;
+  ttsSynth.speak(utter);
+}
+
+ttsBtn.addEventListener('click', () => {
+  const text = editor.textContent.trim();
+  if (ttsSynth.speaking) {
+    ttsSynth.cancel();
+    ttsBtn.classList.remove('playing');
+    return;
+  }
+  if (!text) {
+    showToast('اول متنی تایپ یا ضبط کن');
+    return;
+  }
+  ttsBtn.classList.add('playing');
+  speakText(text, 'fa-IR', () => ttsBtn.classList.remove('playing'));
+});
+
+// make sure voices are loaded (some browsers load them async)
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => { ttsSynth.getVoices(); };
+}
+
+// ── TRANSLATION (MyMemory API — free, no key) ──
+const translateEnBtn   = document.getElementById('translate-en-btn');
+const translateFaBtn   = document.getElementById('translate-fa-btn');
+const translateOutput  = document.getElementById('translate-output');
+const translateActions = document.getElementById('translate-actions');
+const translateCopyBtn = document.getElementById('translate-copy-btn');
+const translateInsertBtn = document.getElementById('translate-insert-btn');
+const translateTtsBtn  = document.getElementById('translate-tts-btn');
+
+let lastTranslatedText = '';
+let lastTranslatedLang = 'en';
+
+async function translateText(text, sourceLang, targetLang) {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('translate-failed');
+  const data = await res.json();
+  if (!data || !data.responseData || !data.responseData.translatedText) {
+    throw new Error('translate-empty');
+  }
+  return data.responseData.translatedText;
+}
+
+function setTranslateLoading(btn, isLoading) {
+  btn.disabled = isLoading;
+  btn.style.opacity = isLoading ? '.6' : '';
+}
+
+async function handleTranslate(sourceLang, targetLang, btn) {
+  const text = editor.textContent.trim();
+  if (!text) {
+    showToast('اول متنی تایپ یا ضبط کن');
+    return;
+  }
+  setTranslateLoading(btn, true);
+  setStatus('در حال ترجمه…', 'violet');
+  try {
+    const translated = await translateText(text, sourceLang, targetLang);
+    lastTranslatedText = translated;
+    lastTranslatedLang = targetLang;
+    translateOutput.textContent = translated;
+    translateOutput.classList.add('visible');
+    translateOutput.classList.toggle('ltr-text', targetLang === 'en');
+    translateOutput.classList.toggle('rtl-text', targetLang === 'fa');
+    translateActions.classList.add('visible');
+    setStatus('آماده', '');
+  } catch (err) {
+    showToast('خطا در ترجمه — اتصال اینترنت را بررسی کن');
+    setStatus('آماده', '');
+  } finally {
+    setTranslateLoading(btn, false);
+  }
+}
+
+translateEnBtn.addEventListener('click', () => handleTranslate('fa', 'en', translateEnBtn));
+translateFaBtn.addEventListener('click', () => handleTranslate('en', 'fa', translateFaBtn));
+
+translateCopyBtn.addEventListener('click', async () => {
+  if (!lastTranslatedText) return;
+  try {
+    await navigator.clipboard.writeText(lastTranslatedText);
+    showToast('ترجمه کپی شد');
+  } catch (e) {
+    showToast('خطا در کپی کردن');
+  }
+});
+
+translateInsertBtn.addEventListener('click', () => {
+  if (!lastTranslatedText) return;
+  editor.textContent = lastTranslatedText;
+  updateCharCount();
+  showToast('متن ادیتور جایگزین شد');
+});
+
+translateTtsBtn.addEventListener('click', () => {
+  if (!lastTranslatedText) return;
+  const lang = lastTranslatedLang === 'en' ? 'en-US' : 'fa-IR';
+  translateTtsBtn.classList.add('playing');
+  speakText(lastTranslatedText, lang, () => translateTtsBtn.classList.remove('playing'));
+});
+
+// ── PWA INSTALL ──
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBanner.classList.add('visible');
+});
+
+installBtn.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  installBanner.classList.remove('visible');
+  if (outcome === 'accepted') showToast('اپ نصب شد ✓');
+});
+
+dismissBanner.addEventListener('click', () => installBanner.classList.remove('visible'));
+
+window.addEventListener('appinstalled', () => {
+  installBanner.classList.remove('visible');
+  showToast('اپ با موفقیت نصب شد ✓');
+});
+
+// ── INIT ──
+renderHistory();
+updateCharCount();
+</script>
+</body>
+</html>
