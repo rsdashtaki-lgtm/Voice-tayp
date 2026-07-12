@@ -1,0 +1,36 @@
+{
+  "name": "صوتی‌تایپ – تایپ صوتی فارسی",
+  "short_name": "صوتی‌تایپ",
+  "description": "تایپ صوتی فارسی سریع و آفلاین",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f14",
+  "theme_color": "#0f0f14",
+  "orientation": "portrait",
+  "lang": "fa",
+  "dir": "rtl",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "شروع ضبط",
+      "short_name": "ضبط",
+      "description": "مستقیم به صفحه تایپ صوتی برو",
+      "url": "/"
+    }
+  ]
+}
