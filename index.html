@@ -646,7 +646,7 @@ function buildRecognition() {
   const r = new SpeechRecognition();
   r.lang             = 'fa-IR';
   r.interimResults   = true;
-  r.continuous       = false;   // false = پایدارتر روی موبایل
+  r.continuous       = true;   // true = یک session پیوسته، بدون قطع‌شدن با هر مکث کوتاه
   r.maxAlternatives  = 1;
 
   r.onstart = () => {
@@ -660,7 +660,7 @@ function buildRecognition() {
   r.onresult = (e) => {
     let interim = '';
     let final   = '';
-    for (let i = 0; i < e.results.length; i++) {
+    for (let i = e.resultIndex; i < e.results.length; i++) {
       const t = e.results[i][0].transcript;
       if (e.results[i].isFinal) final += t + ' ';
       else interim += t;
@@ -682,14 +682,14 @@ function buildRecognition() {
   r.onend = () => {
     interimText.textContent = '';
     if (isRecording) {
-      // به جای restart، یه instance تازه می‌سازیم بعد از ۲۵۰ms
+      // به جای restart، یه instance تازه می‌سازیم بعد از ۱۰۰ms
       clearTimeout(restartTimer);
       restartTimer = setTimeout(() => {
         if (isRecording) {
           recognition = buildRecognition();
           recognition.start();
         }
-      }, 250);
+      }, 100);
     } else {
       stopUI();
     }
